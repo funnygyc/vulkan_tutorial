@@ -1,0 +1,3 @@
+D:/Vulkan_projs/Clion_proj1/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+D:/Vulkan_projs/Clion_proj1/cmake-build-debug/CMakeFiles/test2.dir
+D:/Vulkan_projs/Clion_proj1/cmake-build-debug/CMakeFiles/edit_cache.dir
