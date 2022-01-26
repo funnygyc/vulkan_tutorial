@@ -1,21 +1,14 @@
+
+# Consider dependencies only in project.
+set(CMAKE_DEPENDS_IN_PROJECT_ONLY OFF)
+
 # The set of languages for which implicit dependencies are needed:
 set(CMAKE_DEPENDS_LANGUAGES
-  "CXX"
-  )
-# The set of files for implicit dependencies of each language:
-set(CMAKE_DEPENDS_CHECK_CXX
-  "D:/Vulkan_projs/Clion_proj1/src/test2.cpp" "D:/Vulkan_projs/Clion_proj1/cmake-build-debug/CMakeFiles/test2.dir/src/test2.cpp.obj"
-  )
-set(CMAKE_CXX_COMPILER_ID "GNU")
-
-# Preprocessor definitions for this target.
-set(CMAKE_TARGET_DEFINITIONS_CXX
-  "DEBUG"
   )
 
-# The include file search paths:
-set(CMAKE_CXX_TARGET_INCLUDE_PATH
-  "../include"
+# The set of dependency files which are needed:
+set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "E:/Clion_projs/vulkan_tutorial/src/test2.cpp" "CMakeFiles/test2.dir/src/test2.cpp.obj" "gcc" "CMakeFiles/test2.dir/src/test2.cpp.obj.d"
   )
 
 # Targets to which this target links.
