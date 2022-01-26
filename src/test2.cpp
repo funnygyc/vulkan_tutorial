@@ -67,7 +67,7 @@ private:
 
     void cleanup()
     {
-        if (enableValidationLayers) {
+    if (enableValidationLayers) {
             DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
         }
 
@@ -81,13 +81,13 @@ private:
     void createInstance()
     {
 //        // check Vulkan extensions information
-//        uint32_t extensionCount = 0;
-//        vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-//        std::vector<VkExtensionProperties> extensions(extensionCount);
-//        vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
-//        std::cout << "Vulkan " << extensionCount << " extensions information:" << std::endl;
-//        for(auto &extension : extensions) {
-//            std::cout << "\t" << extension.extensionName << std::endl;
+//        uint32_t availableExtensionsCount = 0;
+//        vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionsCount, nullptr);
+//        std::vector<VkExtensionProperties> availableExtensions(availableExtensionsCount);
+//        vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionsCount, availableExtensions.data());
+//        std::cout << "Vulkan " << availableExtensionsCount << " extensions information:" << std::endl;
+//        for(auto &availableExtension : availableExtensions) {
+//            std::cout << "\t" << availableExtension.extensionName << std::endl;
 //        }
 
         // check validationLayers
@@ -134,7 +134,7 @@ private:
 
     }
 
-    bool checkValidationLayerSupport()
+    static bool checkValidationLayerSupport()
     {
         uint32_t layerCount = 0;
         vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
@@ -159,7 +159,7 @@ private:
         return true;
     }
 
-    std::vector<const char*> getRequiredExtensions()
+    static std::vector<const char*> getRequiredExtensions()
     {
         uint32_t glfwExtensionCount = 0;
         const char** glfwExtensions;
@@ -174,7 +174,7 @@ private:
         return extensions;
     }
 
-    void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
+    static void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
         createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
         // dont output info bit because of the "json invalid 1.2.0", after updating vulkan loader, I may add back
@@ -222,7 +222,7 @@ private:
         }
     }
 
-    bool isDeviceSuitable(VkPhysicalDevice device)
+    static bool isDeviceSuitable(VkPhysicalDevice device)
     {
         VkPhysicalDeviceProperties deviceProperties;
         vkGetPhysicalDeviceProperties(device, &deviceProperties);
