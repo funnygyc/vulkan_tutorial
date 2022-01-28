@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <functional>
 #include <cstdlib>
+#include <optional>
 #include <cstring>
 
 const std::vector<const char*> validationLayers = {
@@ -38,6 +39,12 @@ private:
     GLFWwindow* window;
     VkInstance instance;
     VkDebugUtilsMessengerEXT debugMessenger;
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+    VkDevice device;
+    VkQueue graphicsQueue;
+
+    // ********************************************************************************************
+    // Init Parts Start
 
     void initWindow()
     {
@@ -55,6 +62,7 @@ private:
         createInstance();
         setupDebugMessenger();
         pickPhysicalDevice();
+        createLogicalDevice();
     }
 
     void mainLoop()
@@ -67,7 +75,9 @@ private:
 
     void cleanup()
     {
-    if (enableValidationLayers) {
+        vkDestroyDevice(device, nullptr);
+
+        if (enableValidationLayers) {
             DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
         }
 
@@ -77,6 +87,10 @@ private:
 
         glfwTerminate();
     }
+
+    // Init Parts End
+    // ********************************************************************************************
+    // Instance Parts Start
 
     void createInstance()
     {
@@ -134,30 +148,9 @@ private:
 
     }
 
-    static bool checkValidationLayerSupport()
-    {
-        uint32_t layerCount = 0;
-        vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-
-        std::vector<VkLayerProperties> availableLayers(layerCount);
-        vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
-
-        for (const char* layerName : validationLayers) {
-            bool layerFound = false;
-            for (const auto &layerProperties : availableLayers) {
-                if (strcmp(layerName, layerProperties.layerName) == 0) {
-                    layerFound = true;
-                    break;
-                }
-            }
-
-            if (!layerFound) {
-                return false;
-            }
-        }
-
-        return true;
-    }
+    // Instance Parts End
+    // ********************************************************************************************
+    // Extension Parts Start
 
     static std::vector<const char*> getRequiredExtensions()
     {
@@ -173,6 +166,115 @@ private:
 
         return extensions;
     }
+
+    // Extension Parts End
+    // ********************************************************************************************
+    // Physical&Logical Devices & Queue Part Start
+
+    void pickPhysicalDevice()
+    {
+        uint32_t deviceCount = 0;
+        vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+        if (deviceCount == 0) {
+            throw std::runtime_error("fail to find GPUs with Vulkan support");
+        }
+        std::cout << "device count: " << deviceCount << std::endl;
+
+        std::vector<VkPhysicalDevice> devices(deviceCount);
+        vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+        for (const auto& device : devices) {
+            if (isDeviceSuitable(device)) {
+                physicalDevice = device;
+                break;
+            }
+        }
+
+        if (physicalDevice == VK_NULL_HANDLE) {
+            throw std::runtime_error("fail to find a suitable GPU");
+        }
+    }
+
+    static bool isDeviceSuitable(VkPhysicalDevice device)
+    {
+//        VkPhysicalDeviceProperties deviceProperties;
+//        vkGetPhysicalDeviceProperties(device, &deviceProperties);
+//
+//        VkPhysicalDeviceFeatures deviceFeatures;
+//        vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+//
+//        return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+        QueueFamilyIndices queueCheck = findQueueFamilies(device);
+        return queueCheck.isComplete();
+    }
+
+    struct QueueFamilyIndices {
+        std::optional<uint32_t> graphicsFamily;
+
+        bool isComplete() {
+            return graphicsFamily.has_value();
+        }
+    };
+
+    static QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device)
+    {
+        QueueFamilyIndices queueFamilyIndices;
+        uint32_t queueFamilyCount = 0;
+        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+        std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+        int i = 0;
+        for (const auto& queueFamily : queueFamilies) {
+            if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+                queueFamilyIndices.graphicsFamily = i;
+                break;
+            }
+            i++;
+        }
+
+        return queueFamilyIndices;
+    }
+
+    void createLogicalDevice()
+    {
+        QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+
+        VkDeviceQueueCreateInfo queueCreateInfo{};
+        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
+        queueCreateInfo.queueCount = 1;
+        float queuePriority = 1.0f;
+        queueCreateInfo.pQueuePriorities = &queuePriority;
+
+        VkPhysicalDeviceFeatures deviceFeatures{};
+
+        VkDeviceCreateInfo createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        createInfo.pQueueCreateInfos = &queueCreateInfo;
+        createInfo.queueCreateInfoCount = 1;
+
+        createInfo.pEnabledFeatures = &deviceFeatures;
+        createInfo.enabledExtensionCount = 0;
+
+        if (enableValidationLayers) {
+            createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+            createInfo.ppEnabledLayerNames = validationLayers.data();
+        } else {
+            createInfo.enabledLayerCount = 0;
+        }
+
+        if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create logical device!");
+        }
+
+        vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+    }
+
+    // Physical&Logical Devices & Queue Part End
+    // ********************************************************************************************
+    // Debug Part(ValidationLayer Part) Start
 
     static void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
         createInfo = {};
@@ -198,43 +300,30 @@ private:
         }
     }
 
-    void pickPhysicalDevice()
+    static bool checkValidationLayerSupport()
     {
-        VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-        uint32_t deviceCount = 0;
-        vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
-        if (deviceCount == 0) {
-            throw std::runtime_error("fail to find GPUs with Vulkan support");
-        }
+        uint32_t layerCount = 0;
+        vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
-        std::vector<VkPhysicalDevice> devices(deviceCount);
-        vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+        std::vector<VkLayerProperties> availableLayers(layerCount);
+        vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
-        for (const auto& device : devices) {
-            if (isDeviceSuitable(device)) {
-                physicalDevice = device;
-                break;
+        for (const char* layerName : validationLayers) {
+            bool layerFound = false;
+            for (const auto &layerProperties : availableLayers) {
+                if (strcmp(layerName, layerProperties.layerName) == 0) {
+                    layerFound = true;
+                    break;
+                }
+            }
+
+            if (!layerFound) {
+                return false;
             }
         }
 
-        if (physicalDevice == VK_NULL_HANDLE) {
-            throw std::runtime_error("fail to find a suitable GPU");
-        }
+        return true;
     }
-
-    static bool isDeviceSuitable(VkPhysicalDevice device)
-    {
-        VkPhysicalDeviceProperties deviceProperties;
-        vkGetPhysicalDeviceProperties(device, &deviceProperties);
-
-        VkPhysicalDeviceFeatures deviceFeatures;
-        vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
-
-        return (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) &&
-               deviceFeatures.geometryShader;
-    }
-
-    // static functions
 
     /*
      * messageSeverity:
@@ -252,7 +341,7 @@ private:
     )
     {
         // harmless warning output in the vulkan loader, just delete it
-        // detail in https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/2729
+        // details in https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/2729
         if (strstr(pCallbackData->pMessage, "invalid layer manifest file version 1.2.0.") == nullptr) {
             std::cerr << "\nvalidation layer: \nmessageSeverity: " << std::hex << messageSeverity <<
             "\nmessageType:" << std::hex << messageType << "\n" << pCallbackData->pMessage << std::endl;
@@ -286,6 +375,9 @@ private:
             return func(instance, debugMessenger, pAllocator);
         }
     }
+
+    // Debug Part(ValidationLayer Part) End
+    // ********************************************************************************************
 
 };
 
