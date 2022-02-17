@@ -528,6 +528,7 @@ private:
 
     void createGraphicsPipeline()
     {
+        // shader part
         auto vertShaderCode = readFile("shader/vert.spv");
         auto fragShaderCode = readFile("shader/frag.spv");
 
@@ -547,6 +548,78 @@ private:
         fragShaderStageInfo.pName = "main";
 
         VkPipelineShaderStageCreateInfo  shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
+
+        // Fixed Functions
+        // Vertex Buffer
+        VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo{};
+        vertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+        vertexInputStateCreateInfo.vertexBindingDescriptionCount = 0;
+        vertexInputStateCreateInfo.pVertexBindingDescriptions = nullptr;
+        vertexInputStateCreateInfo.vertexAttributeDescriptionCount = 0;
+        vertexInputStateCreateInfo.pVertexAttributeDescriptions = nullptr;
+
+        VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
+        inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+        inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        inputAssembly.primitiveRestartEnable = VK_FALSE;
+
+        // Viewport
+        VkViewport viewport = {};
+        viewport.x = 0.0f;
+        viewport.y = 0.0f;
+        viewport.width = (float) swapChainExtent.width;
+        viewport.width = (float) swapChainExtent.height;
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
+
+        VkRect2D scissor{};
+        scissor.offset = {0, 0};
+        scissor.extent = swapChainExtent;
+
+        VkPipelineViewportStateCreateInfo viewportState{};
+        viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+        viewportState.viewportCount = 1;
+        viewportState.pViewports = &viewport;
+        viewportState.scissorCount = 1;
+        viewportState.pScissors = &scissor;
+
+        // Rasterization
+        VkPipelineRasterizationStateCreateInfo rasterization{};
+        rasterization.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+        rasterization.depthClampEnable = VK_FALSE;
+        rasterization.rasterizerDiscardEnable = VK_FALSE;
+        rasterization.polygonMode = VK_POLYGON_MODE_FILL;
+        rasterization.lineWidth = 1.0f;
+        rasterization.cullMode = VK_CULL_MODE_BACK_BIT;
+        rasterization.frontFace = VK_FRONT_FACE_CLOCKWISE;
+        rasterization.depthBiasEnable = VK_FALSE;
+        rasterization.depthBiasConstantFactor = 0.0f;
+        rasterization.depthBiasClamp = 0.0f;
+        rasterization.depthBiasSlopeFactor = 0.0f;
+
+        // Multisampling
+        VkPipelineMultisampleStateCreateInfo multisampling{};
+        multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+        multisampling.sampleShadingEnable = VK_FALSE;
+        multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+        multisampling.minSampleShading = 1.0f;
+        multisampling.pSampleMask = nullptr;
+        multisampling.alphaToCoverageEnable = VK_FALSE;
+        multisampling.alphaToOneEnable = VK_FALSE;
+
+        // Depth and stencil testing
+
+        // Color Blending
+        VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+        colorBlendAttachment.blendEnable = VK_FALSE;
+        colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+        colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+        colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+        colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+        colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+        colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+        
+
 
         vkDestroyShaderModule(logicalDevice, vertShaderModule, nullptr);
         vkDestroyShaderModule(logicalDevice, fragShaderModule, nullptr);
