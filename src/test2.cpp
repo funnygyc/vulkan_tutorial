@@ -57,6 +57,10 @@ private:
     VkFormat swapChainImageFormat;
     VkExtent2D swapChainExtent;
     std::vector<VkImageView> swapChainImageViews;
+    VkRenderPass renderPass;
+    VkPipelineLayout pipelineLayout;
+    VkPipeline graphicsPipeline;
+
 
     // ********************************************************************************************
     // Main Frame Parts Start
@@ -81,6 +85,7 @@ private:
         createLogicalDevice();
         createSwapChain();
         createImageViews();
+        createRenderPass();
         createGraphicsPipeline();
     }
 
@@ -94,6 +99,9 @@ private:
 
     void cleanup()
     {
+        vkDestroyPipeline(logicalDevice, graphicsPipeline, nullptr);
+        vkDestroyPipelineLayout(logicalDevice, pipelineLayout, nullptr);
+        vkDestroyRenderPass(logicalDevice, renderPass, nullptr);
         for (auto imageView : swapChainImageViews) {
             vkDestroyImageView(logicalDevice, imageView, nullptr);
         }
@@ -529,8 +537,8 @@ private:
     void createGraphicsPipeline()
     {
         // shader part
-        auto vertShaderCode = readFile("shader/vert.spv");
-        auto fragShaderCode = readFile("shader/frag.spv");
+        auto vertShaderCode = readFile("../shader/vert.spv");
+        auto fragShaderCode = readFile("../shader/frag.spv");
 
         VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
         VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
@@ -568,7 +576,7 @@ private:
         viewport.x = 0.0f;
         viewport.y = 0.0f;
         viewport.width = (float) swapChainExtent.width;
-        viewport.width = (float) swapChainExtent.height;
+        viewport.height = (float) swapChainExtent.height;
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
 
@@ -618,8 +626,64 @@ private:
         colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
         colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
         colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
-        
+        VkPipelineColorBlendStateCreateInfo colorBlending{};
+        colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+        colorBlending.logicOpEnable = VK_FALSE;
+        colorBlending.logicOp = VK_LOGIC_OP_COPY;
+        colorBlending.attachmentCount = 1;
+        colorBlending.pAttachments = &colorBlendAttachment;
+        colorBlending.blendConstants[0] = 0.0f;
+        colorBlending.blendConstants[1] = 0.0f;
+        colorBlending.blendConstants[2] = 0.0f;
+        colorBlending.blendConstants[3] = 0.0f;
 
+        // DynamicState
+        VkDynamicState dynamicStates[] = {
+            VK_DYNAMIC_STATE_VIEWPORT,
+            VK_DYNAMIC_STATE_LINE_WIDTH
+        };
+
+        VkPipelineDynamicStateCreateInfo dynamicState{};
+        dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+        dynamicState.dynamicStateCount = 2;
+        dynamicState.pDynamicStates = dynamicStates;
+
+        // Pipeline Layout
+        VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
+        pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        pipelineLayoutCreateInfo.setLayoutCount = 0;
+        pipelineLayoutCreateInfo.pSetLayouts = nullptr;
+        pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
+        pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
+
+        if (vkCreatePipelineLayout(logicalDevice, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create pipeline layout");
+        }
+
+        // Create Pipeline
+        VkGraphicsPipelineCreateInfo pipelineCreateInfo{};
+        pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+        pipelineCreateInfo.stageCount = 2;
+        pipelineCreateInfo.pStages = shaderStages;
+        pipelineCreateInfo.pVertexInputState = &vertexInputStateCreateInfo;
+        pipelineCreateInfo.pInputAssemblyState = &inputAssembly;
+        pipelineCreateInfo.pViewportState = &viewportState;
+        pipelineCreateInfo.pMultisampleState = &multisampling;
+        pipelineCreateInfo.pRasterizationState = &rasterization;
+        pipelineCreateInfo.pDepthStencilState = nullptr;
+        pipelineCreateInfo.pColorBlendState = &colorBlending;
+        pipelineCreateInfo.pDynamicState = nullptr;
+
+        pipelineCreateInfo.layout = pipelineLayout;
+
+        pipelineCreateInfo.renderPass = renderPass;
+        pipelineCreateInfo.subpass = 0;
+        pipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
+        pipelineCreateInfo.basePipelineIndex = -1;
+
+        if (vkCreateGraphicsPipelines(logicalDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create graphics pipeline");
+        }
 
         vkDestroyShaderModule(logicalDevice, vertShaderModule, nullptr);
         vkDestroyShaderModule(logicalDevice, fragShaderModule, nullptr);
@@ -637,6 +701,41 @@ private:
         }
 
         return shaderModule;
+    }
+
+    void createRenderPass() 
+    {
+        VkAttachmentDescription colorAttachment{};
+        colorAttachment.format = swapChainImageFormat;
+        colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+        colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+        VkAttachmentReference colorAttachmentReference{};
+        colorAttachmentReference.attachment = 0;
+        colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+        // Subpass
+        VkSubpassDescription subpass{};
+        subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+        subpass.colorAttachmentCount = 1;
+        subpass.pColorAttachments = &colorAttachmentReference;
+
+        // RenderPass Create
+        VkRenderPassCreateInfo renderPassCreateInfo{};
+        renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+        renderPassCreateInfo.attachmentCount = 1;
+        renderPassCreateInfo.pAttachments = &colorAttachment;
+        renderPassCreateInfo.subpassCount = 1;
+        renderPassCreateInfo.pSubpasses = &subpass;
+
+        if (vkCreateRenderPass(logicalDevice, &renderPassCreateInfo, nullptr, &renderPass) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create render pass");
+        }
     }
 
     // Graphics PipeLine Part End
