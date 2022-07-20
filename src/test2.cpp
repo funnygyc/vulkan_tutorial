@@ -15,6 +15,7 @@
 #include <cstring>
 #include <cstdint>
 #include <algorithm>
+#include <vector>
 
 const std::vector<const char*> validationLayers = {
         "VK_LAYER_KHRONOS_validation"
@@ -368,7 +369,7 @@ private:
         VkInstanceCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         createInfo.pApplicationInfo = &appInfo;
-
+        createInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
         auto extensions = getRequiredExtensions();
         createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
         createInfo.ppEnabledExtensionNames = extensions.data();
@@ -390,6 +391,7 @@ private:
 
         // check create instance success or not
         if (result != VK_SUCCESS) {
+            printf("Error Code: %i \n", result);
             throw std::runtime_error("fail to create an instance!");
         }
 
@@ -411,6 +413,10 @@ private:
             extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
         }
 
+#ifdef MAC_OS
+        extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+        extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+#endif
         return extensions;
     }
 
