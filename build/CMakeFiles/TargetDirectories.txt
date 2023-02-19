@@ -1,0 +1,7 @@
+C:/vulkan/mgVulkan/just_remote/vulkan_tutorial/build/CMakeFiles/test2.dir
+C:/vulkan/mgVulkan/just_remote/vulkan_tutorial/build/CMakeFiles/test3.dir
+C:/vulkan/mgVulkan/just_remote/vulkan_tutorial/build/CMakeFiles/test4.dir
+C:/vulkan/mgVulkan/just_remote/vulkan_tutorial/build/CMakeFiles/test-devicegroup.dir
+C:/vulkan/mgVulkan/just_remote/vulkan_tutorial/build/CMakeFiles/test-devicegroup2.dir
+C:/vulkan/mgVulkan/just_remote/vulkan_tutorial/build/CMakeFiles/edit_cache.dir
+C:/vulkan/mgVulkan/just_remote/vulkan_tutorial/build/CMakeFiles/rebuild_cache.dir

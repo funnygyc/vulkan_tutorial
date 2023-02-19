@@ -1,0 +1,2 @@
+set VK_LAYER_PATH=""
+set VK_INSTANCE_LAYERS=""
