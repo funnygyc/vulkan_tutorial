@@ -1,3 +1,0 @@
-"C:\Program Files\CMake\bin\cmake.exe" -E rm -f CMakeFiles\test3.dir/objects.a
-C:\vulkan\x86_64-8.1.0-release-posix-seh-rt_v6-rev0\mingw64\bin\ar.exe qc CMakeFiles\test3.dir/objects.a @CMakeFiles\test3.dir\objects1.rsp
-C:\vulkan\x86_64-8.1.0-release-posix-seh-rt_v6-rev0\mingw64\bin\g++.exe -Wl,--whole-archive CMakeFiles\test3.dir/objects.a -Wl,--no-whole-archive -o test3.exe -Wl,--out-implib,libtest3.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\test3.dir\linklibs.rsp

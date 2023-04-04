@@ -1,0 +1,2 @@
+export VK_LAYER_PATH=""
+export VK_INSTANCE_LAYERS=""
